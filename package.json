@@ -1,0 +1,12 @@
+{
+  "name": "beatsaber-bot",
+  "version": "1.0.0",
+  "description": "TGRAM → INFERNO → BEATSAVER automated mapper",
+  "scripts": {
+    "worker:deploy": "wrangler deploy"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

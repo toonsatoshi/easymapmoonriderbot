@@ -1,0 +1,93 @@
+name: Generate Beat Saber Map
+
+on:
+  workflow_dispatch:
+    inputs:
+      telegram_chat_id:
+        description: 'Telegram chat_id to reply to'
+        required: true
+      audio_url:
+        description: 'Telegram CDN URL for the audio file'
+        required: true
+      song_title:
+        description: 'Song display title for info.dat'
+        required: false
+        default: 'Unknown Track'
+      song_artist:
+        description: 'Artist name for info.dat'
+        required: false
+        default: 'Unknown Artist'
+      difficulty:
+        description: 'InfernoSaber difficulty 1-10 (float)'
+        required: false
+        default: '5'
+
+jobs:
+  map:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg libsndfile1 libaubio5 python3.10-venv
+
+      - name: Clone InfernoSaber (main_app branch)
+        run: |
+          git clone --depth=1 -b main_app \
+            https://github.com/fred-brenner/InfernoSaber---BeatSaber-Automapper \
+            inferno
+
+      - name: Cache model weights
+        uses: actions/cache@v3
+        with:
+          path: inferno/models
+          key: inferno-models-v1
+
+      - name: Setup Python venv
+        run: |
+          python3.10 -m venv inferno/venv
+          source inferno/venv/bin/activate
+          pip install -r inferno/requirements.txt
+
+      - name: Download audio
+        run: |
+          curl -L "${{ github.event.inputs.audio_url }}" -o input_audio.bin
+          python3 scripts/intake.py input_audio.bin output.wav
+
+      - name: Run InfernoSaber
+        run: |
+          source inferno/venv/bin/activate
+          python3 scripts/run_inferno.py \
+            --audio output.wav \
+            --difficulty ${{ github.event.inputs.difficulty }} \
+            --out map_out/
+
+      - name: Package BSMap.zip
+        run: |
+          python3 scripts/package_map.py \
+            --map-dir map_out/ \
+            --title "${{ github.event.inputs.song_title }}" \
+            --artist "${{ github.event.inputs.song_artist }}" \
+            --audio output.wav \
+            --out BSMap.zip
+
+      - name: Upload to BeatSaver
+        env:
+          BEATSAVER_TOKEN: ${{ secrets.BEATSAVER_TOKEN }}
+        run: |
+          python3 scripts/upload_beatsaver.py \
+            --zip BSMap.zip \
+            --out map_key.txt
+
+      - name: Notify Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: |
+          MAP_KEY=$(cat map_key.txt)
+          python3 scripts/notify_telegram.py \
+            --chat-id "${{ github.event.inputs.telegram_chat_id }}" \
+            --map-key "$MAP_KEY"

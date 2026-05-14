@@ -1,0 +1,10 @@
+{
+  "name": "beatsaber-bot-dispatcher",
+  "main": "worker/dispatcher.js",
+  "compatibility_date": "2024-01-01",
+  "vars": {
+    "GH_OWNER": "toonsatoshi",
+    "GH_REPO": "easymapmoonriderbot",
+    "GH_WORKFLOW_ID": "map.yml"
+  }
+}
