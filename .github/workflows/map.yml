@@ -77,7 +77,7 @@ jobs:
 
       - name: Upload to BeatSaver
         env:
-          BEATSAVER_TOKEN: ${{ secrets.BEATSAVER_TOKEN }}
+          BEATSAVER_SESSION: ${{ secrets.BEATSAVER_SESSION }}
         run: |
           python3 scripts/upload_beatsaver.py \
             --zip BSMap.zip \

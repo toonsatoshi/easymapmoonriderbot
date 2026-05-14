@@ -19,9 +19,11 @@ parser.add_argument("--zip")
 parser.add_argument("--out")  # file to write map key into
 args = parser.parse_args()
 
-token = os.environ.get("BEATSAVER_TOKEN")
-if not token:
-    print("Error: BEATSAVER_TOKEN environment variable not set.")
+# Use Session Cookie instead of Token
+session_cookie = os.environ.get("BEATSAVER_SESSION")
+if not session_cookie:
+    print("Error: BEATSAVER_SESSION environment variable not set.")
+    print("Please follow the README to extract your session cookie from beatsaver.com")
     sys.exit(1)
 
 zip_path = args.zip
@@ -41,7 +43,7 @@ req = urllib.request.Request(
     "https://api.beatsaver.com/upload",
     data=body,
     headers={
-        "Authorization": f"Bearer {token}",
+        "Cookie": f"session={session_cookie}",
         "Content-Type": f"multipart/form-data; boundary={BOUNDARY}",
         "User-Agent": "InfernoBot/1.0",
     },
